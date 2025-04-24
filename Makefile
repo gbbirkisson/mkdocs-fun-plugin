@@ -34,11 +34,11 @@ pyright: ${VENV} ## Run pyright
 
 .PHONY: check-readme
 check-readme: ${VENV}  ## Check if readme is up to date
-	$(MAKE) --no-print-directory README.md
+	$(MAKE) --no-print-directory --always-make README.md
 	git diff --exit-code || (echo "Run 'make README.md' and commit to fix" && exit 1)
 
 README.md: ${SRC_FILES} docs/docs.md docs/fun.py
-	cat docs/docs.md | ${PYTHON} -m mkdocs_fun_plugin docs/fun.py '{{(?P<func>[^\(]+)\((?P<params>[^\)]*)\)}}' > README.md
+	cat docs/docs.md | ${PYTHON} -m mkdocs_fun_plugin docs/fun.py '{{(?P<func>[^\(]+)\((?P<params>[^\)]*)\)}}' > README.md || rm README.md
 
 .PHONY: format
 format: ${VENV} ## Run formatter

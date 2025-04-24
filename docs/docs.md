@@ -16,9 +16,9 @@
 * [Usage 📖](#usage-)
 * [Configuration 🎛](#configuration-)
 * [Examples 💡](#examples-)
-  * [Reusable components](#reusable-components)
   * [References and links](#references-and-links)
   * [Shell](#shell)
+  * [File contents](#file-contents)
 
 <!-- vim-markdown-toc -->
 
@@ -30,7 +30,7 @@ Install the plugin in your project ...
 pip install TODO
 ```
 
-... add it to your mkdocs configuration ...
+... and add it to your `mkdocs.yaml` configuration ...
 
 ```yaml
 # mkdocs.yaml
@@ -42,13 +42,13 @@ plugins:
 
 ```python
 # docs/fun.py
-{{lines(fun.py, 12, 13)}}
+{{func_def(fun.py, hello)}}
 ```
 
 ... and start using your functions in your docs ...
 
 ```markdown
-<!-- docs.md -->
+<!-- docs/docs.md -->
 This #!hello() comes from my function!
 ```
 
@@ -67,42 +67,22 @@ You can customize the plugin behaviour with configuration:
 plugins:
   - fun:
       pattern: "#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)"  # Regex to match functions
-      module: fun.py  # Filename for your functions
+      module: fun.py  # Python file that defines your functions
 ```
 
 ## Examples 💡
-
-### Reusable components
-
-```python
-# docs/fun.py
-{{lines(fun.py, 6, 9)}}
-```
-
-```markdown
-<!-- docs.md -->
-Some awesome documentation ...
-
-#!lines(fun.py, 2, 5)
-```
-
-... becomes ...
-
-```markdown
-Some awesome documentation ...
-
-{{lines(fun.py, 6, 9)}}
-```
 
 ### References and links
 
 ```python
 # docs/fun.py
-{{lines(fun.py, 15, 33)}}
+{{func_def(fun.py, ref)}}
+
+{{func_def(fun.py, link)}}
 ```
 
 ```markdown
-<!-- docs.md -->
+<!-- docs/docs.md -->
 Look at our internal #!ref(mcguffin) docs for more info. Also open up #!link(github).
 ```
 
@@ -116,11 +96,11 @@ Look at our internal {{ref(mcguffin)}} docs for more info. Also open up {{link(g
 
 ```python
 # docs/fun.py
-{{lines(fun.py, 37, 47)}}
+{{func_def(fun.py, shell)}}
 ```
 
 ```markdown
-<!-- docs.md -->
+<!-- docs/docs.md -->
 #!shell("echo hello | cowsay")
 ```
 
@@ -128,4 +108,22 @@ Look at our internal {{ref(mcguffin)}} docs for more info. Also open up {{link(g
 
 ```markdown
 {{shell("echo hello | cowsay")}}
+```
+
+### File contents
+
+```python
+# docs/fun.py
+{{func_def(fun.py, func_def)}}
+```
+
+```markdown
+<!-- docs/docs.md -->
+#!func_def(fun.py, hello)
+```
+
+... becomes ...
+
+```markdown
+{{func_def(fun.py, hello)}}
 ```
