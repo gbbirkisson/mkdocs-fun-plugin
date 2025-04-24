@@ -270,20 +270,22 @@ wheels = [
 name = "mkdocs-fun-plugin"
 version = "0.1.0"
 source = { editable = "." }
+dependencies = [
+    { name = "mkdocs" },
+]
 
 [package.dev-dependencies]
 dev = [
-    { name = "mkdocs" },
     { name = "pyright" },
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
 
 [package.metadata]
+requires-dist = [{ name = "mkdocs", specifier = ">=1.4" }]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "mkdocs", specifier = "==1.6.1" },
     { name = "pyright", specifier = "==1.1.400" },
     { name = "pytest-cov", specifier = "==6.1.1" },
     { name = "ruff", specifier = "==0.11.6" },
