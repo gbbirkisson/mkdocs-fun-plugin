@@ -16,9 +16,9 @@
 * [Usage 📖](#usage-)
 * [Configuration 🎛](#configuration-)
 * [Examples 💡](#examples-)
-  * [Reusable components](#reusable-components)
   * [References and links](#references-and-links)
   * [Shell](#shell)
+  * [File contents](#file-contents)
 
 <!-- vim-markdown-toc -->
 
@@ -30,7 +30,7 @@ Install the plugin in your project ...
 pip install TODO
 ```
 
-... add it to your mkdocs configuration ...
+... and add it to your `mkdocs.yaml` configuration ...
 
 ```yaml
 # mkdocs.yaml
@@ -49,7 +49,7 @@ def hello() -> str:
 ... and start using your functions in your docs ...
 
 ```markdown
-<!-- docs.md -->
+<!-- docs/docs.md -->
 This #!hello() comes from my function!
 ```
 
@@ -68,65 +68,40 @@ You can customize the plugin behaviour with configuration:
 plugins:
   - fun:
       pattern: "#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)"  # Regex to match functions
-      module: fun.py  # Filename for your functions
+      module: fun.py  # Python file that defines your functions
 ```
 
 ## Examples 💡
-
-### Reusable components
-
-```python
-# docs/fun.py
-def lines(file: str, start: int, end: int) -> str:
-    with (Path(__file__).parent / file).open() as f:
-        selected_lines = islice(f, start - 1, end)
-        return "".join(selected_lines).strip()
-```
-
-```markdown
-<!-- docs.md -->
-Some awesome documentation ...
-
-#!lines(fun.py, 2, 5)
-```
-
-... becomes ...
-
-```markdown
-Some awesome documentation ...
-
-def lines(file: str, start: int, end: int) -> str:
-    with (Path(__file__).parent / file).open() as f:
-        selected_lines = islice(f, start - 1, end)
-        return "".join(selected_lines).strip()
-```
 
 ### References and links
 
 ```python
 # docs/fun.py
-_refs = {
-    "mcguffin": ("McGuffin", "/refs/mcguffin.md"),
-}
-
-_links = {
-    "github": (":fontawesome-brands-github: Github", "https://www.github.com"),
-}
-
-
 def ref(key: str) -> str:
-    r = _refs.get(key)
+    """
+    Bookkeeping and standardized format of references in the docs
+    """
+
+    r = {
+        "mcguffin": ("McGuffin", "/refs/mcguffin.md"),
+    }.get(key)
     assert r, f"No ref for '{key}' found"
     return f"[`{r[0]}`]({r[1]})"
 
-
 def link(key: str) -> str:
-    l = _links.get(key)
+    """
+    Bookkeeping and standardized format of external links in the docs
+    """
+
+    l = {
+        "github": (":fontawesome-brands-github: Github", "https://www.github.com"),
+    }.get(key)
     assert l, f"No link for '{key}' found"
+    return f'[{l[0]}]({l[1]}){{:target="_blank"}}'
 ```
 
 ```markdown
-<!-- docs.md -->
+<!-- docs/docs.md -->
 Look at our internal #!ref(mcguffin) docs for more info. Also open up #!link(github).
 ```
 
@@ -140,7 +115,12 @@ Look at our internal [`McGuffin`](/refs/mcguffin.md) docs for more info. Also op
 
 ```python
 # docs/fun.py
+@functools.cache
 def shell(cmd: str) -> str:
+    """
+    Run arbitrary commands and return stdout
+    """
+
     return (
         subprocess.run(
             cmd,
@@ -154,7 +134,7 @@ def shell(cmd: str) -> str:
 ```
 
 ```markdown
-<!-- docs.md -->
+<!-- docs/docs.md -->
 #!shell("echo hello | cowsay")
 ```
 
@@ -169,4 +149,55 @@ _______
             (__)\       )\/\
                 ||----w |
                 ||     ||
+```
+
+### File contents
+
+```python
+# docs/fun.py
+def func_def(file: str, name: str) -> str:
+    """
+    Reads 'file' and returns the definition of function 'name'
+    """
+
+    with (pathlib.Path(__file__).parent / file).open() as f:
+        content = f.read()
+
+    # Find function definition including decorators
+    pattern = rf"(@.*\n)*def {name}\s*\([^)]*\)[^:]*:"
+    match = re.search(pattern, content, re.MULTILINE)
+    assert match, f"Function '{name}' not found in '{file}'"
+
+    # Find where function starts and ends
+    start_pos = match.start()
+    lines = content.splitlines()
+    start_line = content[:start_pos].count("\n")
+
+    # Find function body by tracking indentation
+    function_lines = [lines[start_line]]
+    indent = (
+        re.match(r"(\s*)", lines[start_line + 1]).group(1)
+        if start_line + 1 < len(lines)
+        else ""
+    )
+
+    # Collect and return
+    for i in range(start_line + 1, len(lines)):
+        line = lines[i]
+        if line.strip() and not line.startswith(indent):
+            break
+        function_lines.append(line)
+    return "\n".join(function_lines).strip()
+```
+
+```markdown
+<!-- docs/docs.md -->
+#!func_def(fun.py, hello)
+```
+
+... becomes ...
+
+```markdown
+def hello() -> str:
+    return "world"
 ```

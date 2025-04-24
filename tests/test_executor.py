@@ -16,6 +16,7 @@ class TestExecutor(unittest.TestCase):
         with self.module_path.open("w") as f:
             f.write(
                 dedent("""
+                from functools import cache
                 def add(a, b):
                     return a + b
 
@@ -27,6 +28,9 @@ class TestExecutor(unittest.TestCase):
 
                 def _private_func():
                     return "This is private"
+                @cache
+                def cached_func(param):
+                    return f"Cached: {param}"
             """),
             )
 
@@ -42,6 +46,7 @@ class TestExecutor(unittest.TestCase):
         self.assertIn("add", self.executor._map)
         self.assertIn("greet", self.executor._map)
         self.assertIn("list_items", self.executor._map)
+        self.assertIn("cached_func", self.executor._map)  # Should load decorated functions
         self.assertNotIn("_private_func", self.executor._map)
 
     def test_parse_params(self) -> None:
@@ -109,6 +114,13 @@ class TestExecutor(unittest.TestCase):
         """Test multiple replacements in the same string."""
         markdown = "{{add(1, 2)}} and {{add(3, 4)}}"
         expected = "3 and 7"
+        result = self.executor(markdown)
+        self.assertEqual(result, expected)
+
+    def test_call_with_decorated_function(self) -> None:
+        """Test that decorated functions work properly."""
+        markdown = "{{cached_func('test')}}"
+        expected = "Cached: test"
         result = self.executor(markdown)
         self.assertEqual(result, expected)
 

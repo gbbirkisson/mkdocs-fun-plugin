@@ -17,9 +17,11 @@ if TYPE_CHECKING:
     from mkdocs.structure.files import Files
     from mkdocs.structure.pages import Page
 
+default_pattern = r"#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)"
+
 
 class FunPluginConfig(Config):
-    pattern = option.Type(str, default=r"#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)")
+    pattern = option.Type(str, default=default_pattern)
     module = option.Type(str, default="fun.py")
 
 
@@ -102,10 +104,10 @@ class _Executor:
             dynamic_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(dynamic_module)
 
-            # Get all functions from the module
-            for name, obj in inspect.getmembers(dynamic_module, inspect.isfunction):
+            # Get all functions from the module (including decorated ones)
+            for name, obj in inspect.getmembers(dynamic_module):
                 # Only add public functions (not starting with underscore)
-                if not name.startswith("_"):
+                if not name.startswith("_") and (inspect.isfunction(obj) or callable(obj)):
                     self._map[name] = obj
 
     def __call__(self, markdown: str | None) -> str | None:
