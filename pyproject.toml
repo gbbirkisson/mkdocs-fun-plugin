@@ -41,5 +41,9 @@ ignore = [
   "SLF001",
 ]
 
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
 [tool.pytest.ini_options]
 addopts = "--cov=mkdocs_fun_plugin --cov-report xml"
