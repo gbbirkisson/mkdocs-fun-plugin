@@ -35,7 +35,7 @@ pyright: ${VENV} ## Run pyright
 .PHONY: check-readme
 check-readme: ${VENV}  ## Check if readme is up to date
 	$(MAKE) --no-print-directory --always-make README.md
-	git diff --exit-code || (echo "Run 'make README.md' and commit to fix" && exit 1)
+	git diff --exit-code ':!uv.lock' || (echo "Run 'make README.md' and commit to fix" && exit 1)
 
 README.md: ${SRC_FILES} docs/docs.md docs/fun.py
 	cat docs/docs.md | ${PYTHON} -m mkdocs_fun_plugin docs/fun.py '{{(?P<func>[^\(]+)\((?P<params>[^\)]*)\)}}' > README.md || rm README.md
@@ -44,3 +44,11 @@ README.md: ${SRC_FILES} docs/docs.md docs/fun.py
 format: ${VENV} ## Run formatter
 	${RUFF} format ${SRC_FILES}
 	${RUFF} check --fix --force-exclude --select=I001 ${SRC_FILES}
+
+.PHONY: build
+build: ci ## Build package
+	${UV} build
+
+.PHONY: publish
+publish: build ## Publish package
+	${UV} publish

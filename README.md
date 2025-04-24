@@ -1,7 +1,7 @@
 <h1>
   <p align="center">
     <a href="https://github.com/gbbirkisson/mkdocs-fun-plugin">
-      <img src="logo.png" alt="Logo" height="128">
+      <img src="https://raw.githubusercontent.com/gbbirkisson/mkdocs-fun-plugin/main/logo.png" alt="Logo" height="128">
     </a>
     <br>mkdocs-fun-plugin
   </p>
