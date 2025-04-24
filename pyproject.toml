@@ -1,13 +1,15 @@
 [project]
 name = "mkdocs-fun-plugin"
 version = "0.1.0"
-description = "Add your description here"
+description = "Dead simple custom python functions with mkdocs"
 readme = "README.md"
 authors = [
   { name = "Guðmundur Björn Birkisson", email = "gbb@gbb.is" },
 ]
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+  "mkdocs>=1.4",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -15,7 +17,6 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-  "mkdocs==1.6.1",
   "pyright==1.1.400",
   "pytest-cov==6.1.1",
   "ruff==0.11.6",
