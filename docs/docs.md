@@ -27,7 +27,7 @@
 Install the plugin in your project ...
 
 ```bash
-pip install TODO
+pip install mkdocs-fun-plugin
 ```
 
 ... and add it to your `mkdocs.yaml` configuration ...
