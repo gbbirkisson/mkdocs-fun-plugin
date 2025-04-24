@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/gbbirkisson/mkdocs-fun-plugin/compare/v0.1.1...v0.1.2) (2025-04-24)
+
+
+### Bug Fixes
+
+* release ([#10](https://github.com/gbbirkisson/mkdocs-fun-plugin/issues/10)) ([c09a506](https://github.com/gbbirkisson/mkdocs-fun-plugin/commit/c09a506f9553db4e88be5f127a0529e2a99feffa))
+
 ## [0.1.1](https://github.com/gbbirkisson/mkdocs-fun-plugin/compare/v0.1.0...v0.1.1) (2025-04-24)
 
 
