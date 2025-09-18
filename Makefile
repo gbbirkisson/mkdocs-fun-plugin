@@ -38,7 +38,7 @@ check-readme: ${VENV}  ## Check if readme is up to date
 	git diff --exit-code ':!uv.lock' || (echo "Run 'make README.md' and commit to fix" && exit 1)
 
 README.md: ${SRC_FILES} docs/docs.md docs/fun.py
-	cat docs/docs.md | ${PYTHON} -m mkdocs_fun_plugin docs/fun.py '{{(?P<func>[^\(]+)\((?P<params>[^\)]*)\)}}' > README.md || rm README.md
+	cat docs/docs.md | ${PYTHON} -m mkdocs_fun_plugin docs/fun.py '{{(?P<func>[^\(]+)\((?P<params>[^\)]*)\)}}' '{{<!--\s*fun:disable\s*-->}}' '{{<!--\s*fun:enable\s*-->}}' > README.md || rm README.md
 
 .PHONY: format
 format: ${VENV} ## Run formatter

@@ -19,6 +19,7 @@
   * [References and links](#references-and-links)
   * [Shell](#shell)
   * [File contents](#file-contents)
+  * [Disable plugin for a section](#disable-plugin-for-a-section)
 
 <!-- vim-markdown-toc -->
 
@@ -68,6 +69,8 @@ plugins:
   - fun:
       pattern: "#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)"  # Regex to match functions
       module: fun.py  # Python file that defines your functions
+      disable_pattern: "<!--\s*fun:disable\s*-->"
+      enable_pattern: "<!--\s*fun:enable\s*-->"
 ```
 
 ## Examples 💡
@@ -126,4 +129,25 @@ Look at our internal {{ref(mcguffin)}} docs for more info. Also open up {{link(g
 
 ```markdown
 {{func_def(fun.py, hello)}}
+```
+
+### Disable plugin for a section
+
+```markdown
+<!-- docs/docs.md -->
+#!shell("echo hello | cowsay")
+<!-- fun:disable -->
+#!shell("echo there | cowsay")
+<!-- fun:enable -->
+#!shell("echo friend | cowsay")
+```
+
+... becomes ...
+
+```markdown
+{{shell("echo hello | cowsay")}}
+<!-- fun:disable -->
+#!shell("echo there | cowsay")
+<!-- fun:enable -->
+{{shell("echo friend | cowsay")}}
 ```
