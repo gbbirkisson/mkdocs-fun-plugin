@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from textwrap import dedent
 
-from mkdocs_fun_plugin.plugin import _Executor
+from mkdocs_fun_plugin.plugin import DISABLE_PATTERN, ENABLE_PATTERN, _Executor
 
 
 class TestExecutor(unittest.TestCase):
@@ -36,7 +36,14 @@ class TestExecutor(unittest.TestCase):
 
         # Create the executor with a simple pattern
         self.pattern = re.compile(r"{{(?P<func>\w+)(\((?P<params>.*?)\))?}}")
-        self.executor = _Executor(pattern=self.pattern, module=self.module_path)
+        self.disable_pattern = re.compile(DISABLE_PATTERN)
+        self.enable_pattern = re.compile(ENABLE_PATTERN)
+        self.executor = _Executor(
+            pattern=self.pattern,
+            disable_pattern=self.disable_pattern,
+            enable_pattern=self.enable_pattern,
+            module=self.module_path,
+        )
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
@@ -163,12 +170,16 @@ class TestExecutor(unittest.TestCase):
 
             Normal: 3
 
+            <!-- fun:disable -->
             Disabled: {{add(3, 4)}}
             Still disabled: {{greet("Test")}}
+            <!-- fun:enable -->
 
             Enabled again: 11
 
+            <!-- fun:disable -->
             Another disabled: {{list_items("a", "b")}}
+            <!--   fun:enable   -->
 
             Final: Hello, World!
         """).strip()
@@ -180,13 +191,13 @@ class TestExecutor(unittest.TestCase):
       """Test edge cases for disable/enable comments."""
       # Test unmatched disable (should disable rest of document)
       markdown1 = "{{add(1, 1)}} <!-- fun:disable --> {{add(2, 2)}}"
-      expected1 = "2  {{add(2, 2)}}"
+      expected1 = "2 <!-- fun:disable --> {{add(2, 2)}}"
       result1 = self.executor(markdown1)
       self.assertEqual(result1, expected1)
 
       # Test unmatched enable (should not affect anything)
       markdown2 = "{{add(1, 1)}} <!-- fun:enable -->{{add(2, 2)}}"
-      expected2 = "2 4"
+      expected2 = "2 <!-- fun:enable -->4"
       result2 = self.executor(markdown2)
       self.assertEqual(result2, expected2)
 
@@ -195,6 +206,9 @@ class TestExecutor(unittest.TestCase):
           "<!-- fun:disable --> <!-- fun:disable --> {{add(1, 1)}} "
           "<!-- fun:enable  --> {{add(2, 2)}} <!--  fun:enable --> {{add(3, 3)}}"
       )
-      expected3 = "  {{add(1, 1)}}  {{add(2, 2)}}  6"
+      expected3 = (
+          "<!-- fun:disable --> <!-- fun:disable --> {{add(1, 1)}} "
+          "<!-- fun:enable  --> 4 <!--  fun:enable --> 6"
+      )
       result3 = self.executor(markdown3)
       self.assertEqual(result3, expected3)

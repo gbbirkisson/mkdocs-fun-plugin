@@ -17,17 +17,22 @@ if TYPE_CHECKING:
     from mkdocs.structure.files import Files
     from mkdocs.structure.pages import Page
 
-default_pattern = r"#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)"
-
+DEFAULT_PATTERN = r"#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)"
+DISABLE_PATTERN = r"<!--\s*fun:disable\s*-->"
+ENABLE_PATTERN = r"<!--\s*fun:enable\s*-->"
 
 class FunPluginConfig(Config):
-    pattern = option.Type(str, default=default_pattern)
+    pattern = option.Type(str, default=DEFAULT_PATTERN)
+    disable_pattern = option.Type(str, default=DISABLE_PATTERN)
+    enable_pattern = option.Type(str, default=ENABLE_PATTERN)
     module = option.Type(str, default="fun.py")
 
 
 class FunPlugin(BasePlugin[FunPluginConfig]):
     _executor: _Executor = None  # type: ignore[reportAssignmentType]
     _pattern: re.Pattern = None  # type: ignore[reportAssignmentType]
+    _disable_pattern: re.Pattern = None  # type: ignore[reportAssignmentType]
+    _enable_pattern: re.Pattern = None  # type: ignore[reportAssignmentType]
     _module: Path = None  # type: ignore[reportAssignmentType]
 
     def on_config(
@@ -35,6 +40,8 @@ class FunPlugin(BasePlugin[FunPluginConfig]):
         config: MkDocsConfig,
     ) -> MkDocsConfig | None:
         self._pattern = re.compile(self.config.pattern)
+        self._disable_pattern = re.compile(self.config.disable_pattern)
+        self._enable_pattern = re.compile(self.config.enable_pattern)
         self._module = Path(config.docs_dir) / self.config.module
         return config
 
@@ -59,6 +66,8 @@ class FunPlugin(BasePlugin[FunPluginConfig]):
         try:
             self._executor = _Executor(
                 pattern=self._pattern,
+                disable_pattern=self._disable_pattern,
+                enable_pattern=self._enable_pattern,
                 module=self._module,
             )
         except AssertionError as e:
@@ -86,17 +95,17 @@ class FunPlugin(BasePlugin[FunPluginConfig]):
 
 
 class _Executor:
-    # For detection of control comments in markdown
-    _DISABLE_DETECT = re.compile(r"<!--\s*fun:disable\s*-->")
-    _ENABLE_DETECT = re.compile(r"<!--\s*fun:enable\s*-->")
-
     def __init__(
         self,
         *,
         pattern: re.Pattern,
+        disable_pattern: re.Pattern,
+        enable_pattern: re.Pattern,
         module: Path,
     ) -> None:
         self._pattern = pattern
+        self._disable_pattern = disable_pattern
+        self._enable_pattern = enable_pattern
         self._map = {}
 
         assert module.exists(), f"Module '{module}' is not found"
@@ -143,28 +152,28 @@ class _Executor:
         for (start, end), new_text in reversed(replacements):
             result = result[:start] + new_text + result[end:]
 
-        return self._strip_control_comments(result)
-
-    def _strip_control_comments(self, result: str) -> str:
-        """Remove control comments from markdown."""
-        # Remove standalone comments
-        standalone_disable = re.compile(r"^\s*<!--\s*fun:disable\s*-->\s*$", re.MULTILINE)
-        standalone_enable = re.compile(r"^\s*<!--\s*fun:enable\s*-->\s*$", re.MULTILINE)
-        result = standalone_disable.sub("", result)
-        result = standalone_enable.sub("", result)
-        # Remove inline comments
-        result = self._DISABLE_DETECT.sub("", result)
-        return self._ENABLE_DETECT.sub("", result)
+        return result
 
     def _is_match_enabled(self, match_start: int, markdown: str) -> bool:
         """Check if a function is within an enabled section."""
         # Find all disable/enable markers before the match
         text_before = markdown[:match_start]
-        disable_count = len(self._DISABLE_DETECT.findall(text_before))
-        enable_count = len(self._ENABLE_DETECT.findall(text_before))
 
-        # If there are more disable comments than enable, we are in a disable state
-        return disable_count <= enable_count
+        # Process markers in order
+        off_pos = [(m.start(), "disable") for m in self._disable_pattern.finditer(text_before)]
+        on_pos = [(m.start(), "enable") for m in self._enable_pattern.finditer(text_before)]
+
+        # Combine and sort by position
+        all_markers = sorted(off_pos + on_pos)
+
+        enabled = True
+        for _, marker_type in all_markers:
+            if marker_type == "disable":
+                enabled = False
+            elif marker_type == "enable":
+                enabled = True
+
+        return enabled
 
     def _parse_params(self, params_str: str) -> tuple[tuple[Any, ...], dict[str, Any]]:
         """Parse a comma-separated string into args and kwargs."""
