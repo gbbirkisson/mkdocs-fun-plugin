@@ -17,17 +17,22 @@ if TYPE_CHECKING:
     from mkdocs.structure.files import Files
     from mkdocs.structure.pages import Page
 
-default_pattern = r"#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)"
-
+DEFAULT_PATTERN = r"#!(?P<func>[^\(]+)\((?P<params>[^\)]*)\)"
+DISABLE_PATTERN = r"<!--\s*fun:disable\s*-->"
+ENABLE_PATTERN = r"<!--\s*fun:enable\s*-->"
 
 class FunPluginConfig(Config):
-    pattern = option.Type(str, default=default_pattern)
+    pattern = option.Type(str, default=DEFAULT_PATTERN)
+    disable_pattern = option.Type(str, default=DISABLE_PATTERN)
+    enable_pattern = option.Type(str, default=ENABLE_PATTERN)
     module = option.Type(str, default="fun.py")
 
 
 class FunPlugin(BasePlugin[FunPluginConfig]):
     _executor: _Executor = None  # type: ignore[reportAssignmentType]
     _pattern: re.Pattern = None  # type: ignore[reportAssignmentType]
+    _disable_pattern: re.Pattern = None  # type: ignore[reportAssignmentType]
+    _enable_pattern: re.Pattern = None  # type: ignore[reportAssignmentType]
     _module: Path = None  # type: ignore[reportAssignmentType]
 
     def on_config(
@@ -35,6 +40,8 @@ class FunPlugin(BasePlugin[FunPluginConfig]):
         config: MkDocsConfig,
     ) -> MkDocsConfig | None:
         self._pattern = re.compile(self.config.pattern)
+        self._disable_pattern = re.compile(self.config.disable_pattern)
+        self._enable_pattern = re.compile(self.config.enable_pattern)
         self._module = Path(config.docs_dir) / self.config.module
         return config
 
@@ -59,6 +66,8 @@ class FunPlugin(BasePlugin[FunPluginConfig]):
         try:
             self._executor = _Executor(
                 pattern=self._pattern,
+                disable_pattern=self._disable_pattern,
+                enable_pattern=self._enable_pattern,
                 module=self._module,
             )
         except AssertionError as e:
@@ -90,9 +99,13 @@ class _Executor:
         self,
         *,
         pattern: re.Pattern,
+        disable_pattern: re.Pattern,
+        enable_pattern: re.Pattern,
         module: Path,
     ) -> None:
         self._pattern = pattern
+        self._disable_pattern = disable_pattern
+        self._enable_pattern = enable_pattern
         self._map = {}
 
         assert module.exists(), f"Module '{module}' is not found"
@@ -122,6 +135,10 @@ class _Executor:
             func = self._map.get(func_name)
             assert func, f"func '{func_name}' not found"
 
+            # Skip if match inside block where fun is disabled
+            if not self._is_match_enabled(match.start(), markdown):
+                continue
+
             # Parse args and kwargs from params
             params = match.group("params") if "params" in match.groupdict() else ""
             args, kwargs = self._parse_params(params)
@@ -136,6 +153,27 @@ class _Executor:
             result = result[:start] + new_text + result[end:]
 
         return result
+
+    def _is_match_enabled(self, match_start: int, markdown: str) -> bool:
+        """Check if a function is within an enabled section."""
+        # Find all disable/enable markers before the match
+        text_before = markdown[:match_start]
+
+        # Process markers in order
+        off_pos = [(m.start(), "disable") for m in self._disable_pattern.finditer(text_before)]
+        on_pos = [(m.start(), "enable") for m in self._enable_pattern.finditer(text_before)]
+
+        # Combine and sort by position
+        all_markers = sorted(off_pos + on_pos)
+
+        enabled = True
+        for _, marker_type in all_markers:
+            if marker_type == "disable":
+                enabled = False
+            elif marker_type == "enable":
+                enabled = True
+
+        return enabled
 
     def _parse_params(self, params_str: str) -> tuple[tuple[Any, ...], dict[str, Any]]:
         """Parse a comma-separated string into args and kwargs."""
