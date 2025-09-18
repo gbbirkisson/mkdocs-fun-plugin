@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/gbbirkisson/mkdocs-fun-plugin/compare/v0.1.2...v0.2.0) (2025-09-18)
+
+
+### Features
+
+* added support for enable/disable with comments ([#46](https://github.com/gbbirkisson/mkdocs-fun-plugin/issues/46)) ([fbd4b29](https://github.com/gbbirkisson/mkdocs-fun-plugin/commit/fbd4b29bde694ffe17405b9cb643987649c6c1c7))
+
+
+### Documentation
+
+* update readme ([#48](https://github.com/gbbirkisson/mkdocs-fun-plugin/issues/48)) ([8f341c5](https://github.com/gbbirkisson/mkdocs-fun-plugin/commit/8f341c5494262813c42a3d4d34534cb060f3d6e5))
+
 ## [0.1.2](https://github.com/gbbirkisson/mkdocs-fun-plugin/compare/v0.1.1...v0.1.2) (2025-04-24)
 
 
