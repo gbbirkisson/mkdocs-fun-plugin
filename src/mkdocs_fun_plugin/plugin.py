@@ -86,6 +86,10 @@ class FunPlugin(BasePlugin[FunPluginConfig]):
 
 
 class _Executor:
+    # For detection of control comments in markdown
+    _DISABLE_DETECT = re.compile(r"<!--\s*fun:disable\s*-->")
+    _ENABLE_DETECT = re.compile(r"<!--\s*fun:enable\s*-->")
+
     def __init__(
         self,
         *,
@@ -122,6 +126,10 @@ class _Executor:
             func = self._map.get(func_name)
             assert func, f"func '{func_name}' not found"
 
+            # Skip if match inside block where fun is disabled
+            if not self._is_match_enabled(match.start(), markdown):
+                continue
+
             # Parse args and kwargs from params
             params = match.group("params") if "params" in match.groupdict() else ""
             args, kwargs = self._parse_params(params)
@@ -135,7 +143,28 @@ class _Executor:
         for (start, end), new_text in reversed(replacements):
             result = result[:start] + new_text + result[end:]
 
-        return result
+        return self._strip_control_comments(result)
+
+    def _strip_control_comments(self, result: str) -> str:
+        """Remove control comments from markdown."""
+        # Remove standalone comments
+        standalone_disable = re.compile(r"^\s*<!--\s*fun:disable\s*-->\s*$", re.MULTILINE)
+        standalone_enable = re.compile(r"^\s*<!--\s*fun:enable\s*-->\s*$", re.MULTILINE)
+        result = standalone_disable.sub("", result)
+        result = standalone_enable.sub("", result)
+        # Remove inline comments
+        result = self._DISABLE_DETECT.sub("", result)
+        return self._ENABLE_DETECT.sub("", result)
+
+    def _is_match_enabled(self, match_start: int, markdown: str) -> bool:
+        """Check if a function is within an enabled section."""
+        # Find all disable/enable markers before the match
+        text_before = markdown[:match_start]
+        disable_count = len(self._DISABLE_DETECT.findall(text_before))
+        enable_count = len(self._ENABLE_DETECT.findall(text_before))
+
+        # If there are more disable comments than enable, we are in a disable state
+        return disable_count <= enable_count
 
     def _parse_params(self, params_str: str) -> tuple[tuple[Any, ...], dict[str, Any]]:
         """Parse a comma-separated string into args and kwargs."""

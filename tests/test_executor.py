@@ -136,3 +136,65 @@ class TestExecutor(unittest.TestCase):
         expected = "item with, comma, [1, 2, {'nested': 'value'}]"
         result = self.executor(markdown)
         self.assertEqual(result, expected)
+
+    def test_disable_enable_comments(self) -> None:
+        """Test that disable/enable comments control function processing."""
+        markdown = dedent("""
+            # Test Document
+
+            Normal: {{add(1, 2)}}
+
+            <!-- fun:disable -->
+            Disabled: {{add(3, 4)}}
+            Still disabled: {{greet("Test")}}
+            <!-- fun:enable -->
+
+            Enabled again: {{add(5, 6)}}
+
+            <!-- fun:disable -->
+            Another disabled: {{list_items("a", "b")}}
+            <!--   fun:enable   -->
+
+            Final: {{greet()}}
+        """).strip()
+
+        expected = dedent("""
+            # Test Document
+
+            Normal: 3
+
+            Disabled: {{add(3, 4)}}
+            Still disabled: {{greet("Test")}}
+
+            Enabled again: 11
+
+            Another disabled: {{list_items("a", "b")}}
+
+            Final: Hello, World!
+        """).strip()
+
+        result = self.executor(markdown)
+        self.assertEqual(result, expected)
+
+    def test_disable_enable_comments_edge_cases(self) -> None:
+      """Test edge cases for disable/enable comments."""
+      # Test unmatched disable (should disable rest of document)
+      markdown1 = "{{add(1, 1)}} <!-- fun:disable --> {{add(2, 2)}}"
+      expected1 = "2  {{add(2, 2)}}"
+      result1 = self.executor(markdown1)
+      self.assertEqual(result1, expected1)
+
+      # Test unmatched enable (should not affect anything)
+      markdown2 = "{{add(1, 1)}} <!-- fun:enable -->{{add(2, 2)}}"
+      expected2 = "2 4"
+      result2 = self.executor(markdown2)
+      self.assertEqual(result2, expected2)
+
+      # Test nested disable comments
+      markdown3 = (
+          "<!-- fun:disable --> <!-- fun:disable --> {{add(1, 1)}} "
+          "<!-- fun:enable  --> {{add(2, 2)}} <!--  fun:enable --> {{add(3, 3)}}"
+      )
+      expected3 = "  {{add(1, 1)}}  {{add(2, 2)}}  6"
+      result3 = self.executor(markdown3)
+      self.assertEqual(result3, expected3)
