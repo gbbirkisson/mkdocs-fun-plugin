@@ -131,13 +131,13 @@ class _Executor:
         replacements = []
 
         for match in re.finditer(self._pattern, markdown):
-            func_name = match.group("func")
-            func = self._map.get(func_name)
-            assert func, f"func '{func_name}' not found"
-
             # Skip if match inside block where fun is disabled
             if not self._is_match_enabled(match.start(), markdown):
                 continue
+
+            func_name = match.group("func")
+            func = self._map.get(func_name)
+            assert func, f"func '{func_name}' not found"
 
             # Parse args and kwargs from params
             params = match.group("params") if "params" in match.groupdict() else ""
