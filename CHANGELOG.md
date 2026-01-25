@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/gbbirkisson/mkdocs-fun-plugin/compare/v0.2.0...v0.2.1) (2026-01-25)
+
+
+### Bug Fixes
+
+* eager function existence check ([#74](https://github.com/gbbirkisson/mkdocs-fun-plugin/issues/74)) ([4a59d9f](https://github.com/gbbirkisson/mkdocs-fun-plugin/commit/4a59d9fb6afda4d80cad5c7ef6acb80674baa8c8))
+
 ## [0.2.0](https://github.com/gbbirkisson/mkdocs-fun-plugin/compare/v0.1.2...v0.2.0) (2025-09-18)
 
 
