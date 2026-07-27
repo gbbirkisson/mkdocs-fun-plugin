@@ -24,7 +24,7 @@ build-backend = "hatchling.build"
 dev = [
   "pyright==1.1.411",
   "pytest-cov==7.1.0",
-  "ruff==0.15.20",
+  "ruff==0.16.0",
 ]
 
 [project.entry-points."mkdocs.plugins"]
@@ -39,6 +39,7 @@ select = [
 ]
 ignore = [
   "C901",
+  "CPY001",
   "D",
   "PLR0912",
   "PT009",
