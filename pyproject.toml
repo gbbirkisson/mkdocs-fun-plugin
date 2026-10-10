@@ -24,7 +24,7 @@ build-backend = "hatchling.build"
 dev = [
   "pyright==1.1.414",
   "pytest-cov==7.1.0",
-  "ruff==0.16.10",
+  "ruff==0.17.0",
 ]
 
 [project.entry-points."mkdocs.plugins"]
